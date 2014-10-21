@@ -10,6 +10,8 @@ An object with advanced capabilities for pinging hosts.
 - [x] Configurable ping frequency
 - [ ] Statistics
 - [ ] Better graphics
+- [ ] Auto detect all platforms as part of Galaxy
+- [ ] Auto detect all DI nodes (PLCs)
  
 ## Setup Instructions
 
