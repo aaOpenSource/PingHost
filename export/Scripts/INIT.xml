@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aaScript name="INIT">
+  <ScriptExecutionGroup>Before outputs</ScriptExecutionGroup>
+  <ScriptOrder>32002</ScriptOrder>
+  <OffScanText />
+  <OnScanText>' Author:		Eliot Landrum &lt;elandrum@stonetek.com&gt;
+' Create date: 	20/OCT/2014
+' Description:	Sets the alarm descriptions based on the configurable host name array
+' ============================================================
+
+dim i as integer;
+dim host as string;
+dim msg as string;
+
+i = 1;
+for each host in Me.Cfg.Hosts[]
+
+	if Me.Cfg.HostsEnabled[i] and (host &lt;&gt; "") then
+		msg = Me.Cfg.AlarmMessage;
+		msg = StringReplace(msg, "&lt;HOST&gt;", Me.Cfg.Hosts[i], true, 1, true);
+		msg = StringReplace(msg, "&lt;PINGS&gt;", Me.Cfg.MaxFailedPings, true, 1, true);
+	endif;
+
+	Me.AlarmMessages[i] = msg;
+
+	i = i + 1;
+next;</OnScanText>
+  <ShutdownText />
+  <StartupText />
+  <Expression />
+  <TriggerType>WhileTrue</TriggerType>
+  <TriggerPeriod>00:00:00.0000000</TriggerPeriod>
+  <TriggerOnQualityChange>false</TriggerOnQualityChange>
+  <ExecuteTimeoutLimit>0</ExecuteTimeoutLimit>
+  <RunsAsync>false</RunsAsync>
+  <ExecuteText />
+</aaScript>

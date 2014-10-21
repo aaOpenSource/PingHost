@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<aaScript name="PingHosts">
+  <ScriptExecutionGroup>Before outputs</ScriptExecutionGroup>
+  <ScriptOrder>32000</ScriptOrder>
+  <OffScanText />
+  <OnScanText />
+  <ShutdownText />
+  <StartupText />
+  <Expression />
+  <TriggerType>Periodic</TriggerType>
+  <TriggerPeriod>00:00:01.0000000</TriggerPeriod>
+  <TriggerOnQualityChange>false</TriggerOnQualityChange>
+  <ExecuteTimeoutLimit>60000</ExecuteTimeoutLimit>
+  <RunsAsync>true</RunsAsync>
+  <ExecuteText>' Author:		Eliot Landrum &lt;elandrum@stonetek.com&gt;
+' Create date: 	20/OCT/2014
+' Description:	Sends the ping request and captures data back about the pings
+' ============================================================
+
+dim host as string;
+dim i as integer;
+dim x as integer;
+dim a as indirect;
+dim timeout as integer;
+dim TimeSinceLastPing as elapsedtime;
+
+dim Ping as System.Net.NetworkInformation.Ping;
+dim PingReply as System.Net.NetworkInformation.PingReply;
+
+' This allows the user to configure the ping frequency
+' Subtract the current time from the time we set in the UDA
+' Since the engine sets the time at deployment, this will have a good default to use.
+TimeSinceLastPing = MyEngine.Scheduler.ScanTime - Me.TimeOfLastPing;
+
+' If we've let enough time to pass since last ping
+if (TimeSinceLastPing &gt;= Me.Cfg.PingFrequency) then
+
+	' Store the current time since we are now doing a ping
+	Me.TimeOfLastPing = MyEngine.Scheduler.ScanTime;
+
+	' loop through each host in our list
+	i = 1;
+	for each host in Me.Cfg.Hosts[]
+		' allows a host to be disabled by turning the enable bit off
+		if Me.Cfg.HostsEnabled[i] and (host &lt;&gt; "") then
+
+			LogTrace("Pinging destination " + host + " with a timeout of " + Me.Cfg.Timeout);	
+
+			try 				
+				Ping = new System.Net.NetworkInformation.Ping;
+
+				' send the ping!
+				timeout = Me.Cfg.Timeout;
+				PingReply = Ping.Send(host, timeout);				
+
+				' wait for reply, once we've got it... set some of our UDA values
+				Me.Reply.Status[i] = PingReply.Status;
+				Me.Reply.RoundTripTime[i] = PingReply.RoundtripTime;
+				Me.Reply.Address[i] = PingReply.Address.ToString();
+	
+				LogTrace("  Reply Status: " + PingReply.Status);
+				LogTrace("  Reply RoundtripTime: " + PingReply.RoundtripTime);
+				LogTrace("  Reply IP Address: " + PingReply.Address.ToString());
+
+				' determine if the host is alive and set us up for alarms
+				if PingReply.Status == System.Net.NetworkInformation.IPStatus.Success then
+					Me.Reply.HostAlive[i] = true;
+				else
+					Me.Reply.HostAlive[i] = false;
+				endif;
+
+			catch
+				LogError(error);
+				Me.Reply.HostAlive[i] = false;
+			endtry;
+
+			if Me.Reply.HostAlive[i] then
+					Me.Reply.LastGoodPing[i] = MyEngine.Scheduler.ScanTime;
+					Me.Reply.ConsecutiveFailedPings[i] = 0;
+					Me.Reply.HostAlarm[i] = false;
+			else
+				Me.Reply.LastFailedPing[i] = MyEngine.Scheduler.ScanTime;
+				Me.Reply.ConsecutiveFailedPings[i] = Me.Reply.ConsecutiveFailedPings[i] + 1;
+
+					' if this is the X'th time that this host has failed, then set the alarm
+					if Me.Reply.ConsecutiveFailedPings[i] &gt;= Me.Cfg.MaxFailedPings then
+						Me.Reply.HostAlarm[i] = true;
+						LogTrace("  Host has exceeded the MaxFailedPings of "+ Me.Cfg.MaxFailedPings +" and is now in alarm");
+					endif;
+
+				LogTrace("  Consecutive failed pings: " + Me.Reply.ConsecutiveFailedPings[i]);
+			endif;
+
+		else
+			Me.Reply.Status[i] = "";
+			Me.Reply.RoundTripTime[i] = 0;
+			Me.Reply.Address[i] = "";	
+			Me.Reply.HostAlive[i] = false;
+			Me.Reply.HostAlarm[i] = false;
+			Me.Reply.ConsecutiveFailedPings[i] = 0;	
+		endif;
+
+		' set indirect the 10 individual tags that can be used as system alarms
+		a.BindTo("Me.HostAlarm" + i);
+		a = Me.Reply.HostAlarm[i];
+	
+		i = i+1;
+	next;
+endif;</ExecuteText>
+</aaScript>
