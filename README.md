@@ -13,6 +13,12 @@ An object with advanced capabilities for pinging hosts.
 - [ ] Auto detect all platforms as part of Galaxy
 - [ ] Auto detect all DI nodes (PLCs)
  
+## Platform Compatibility
+
+Object built in System Platform 2014. Can back-port manually if you take out the [Try/Catch block](https://github.com/aaOpenSource/PingHost/blob/master/export/Scripts/PingHosts.xml#L49). 
+However, will need to capture exception when a hostname can't be resolved. I noticed that Ping.Send(host, timeout)
+just throws an exception when it can't resolve host.
+ 
 ## Setup Instructions
 
 1. Set some good defaults in the Cfg UDAs
@@ -27,10 +33,10 @@ An object with advanced capabilities for pinging hosts.
 
 3. If you'd liked to use the included graphic, pop it into InTouch. Hopefully will have some improvements to this in the future.
 
-## Author
+## Contributors
 
-Complaints, compliments, questions: [Eliot Landrum](elandrum@stonetek.com)
+* [Eliot Landrum](mailto:elandrum@stonetek.com), MES Analyst with [Stone Technologies](http://stonetek.com).
 
 ## License
 
-MIT License
+MIT License. See the [LICENSE file](/LICENSE) for details.
